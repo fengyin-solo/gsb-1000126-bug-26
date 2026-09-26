@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Response
 
 from app.schemas import ActionResult, EntryPayload, PageResult
 from app.services.qc import QcService
@@ -46,6 +46,22 @@ def create_entry(payload: EntryPayload) -> ActionResult:
     if missing:
         return ActionResult(ok=False, message=f"缺少必填字段：{'、'.join(missing)}")
     return ActionResult(ok=True, message="质控样品已登记", entry=entry)
+
+
+@router.put("/{entry_id}", response_model=ActionResult)
+def update_entry(entry_id: int, payload: EntryPayload, response: Response) -> ActionResult:
+    """保存质控样品修改：版本冲突返回 409 并带回当前记录，校验失败说明原因。
+
+    响应体里的 entry 始终是保存后的权威记录，列表页与详情页都以此为准。
+    """
+    entry, message, status = service.update_entry(
+        entry_id,
+        payload.values,
+        base_version=payload.base_version,
+        request_id=payload.request_id,
+    )
+    response.status_code = status
+    return ActionResult(ok=status == 200, message=message, entry=entry)
 
 
 @router.post("/{entry_id}/actions", response_model=ActionResult)

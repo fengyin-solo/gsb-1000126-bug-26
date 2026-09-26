@@ -26,6 +26,10 @@ class EntryPayload(BaseModel):
 
     values: dict[str, Any] = Field(default_factory=dict)
     remark: str | None = None
+    # 乐观并发控制：客户端读出记录时的版本号，保存时带回；不一致说明记录已被他人改过
+    base_version: int | None = None
+    # 幂等键：同一次保存无论重试几次都带同一个标识，服务端只真正执行一次
+    request_id: str | None = None
 
 
 

@@ -4,9 +4,13 @@
 """
 from __future__ import annotations
 
+import threading
 from typing import Any
 
 from app.seed import SEED_ROWS
+
+# 幂等台账只保留最近若干条，避免长跑进程里无限膨胀
+IDEMPOTENCY_LIMIT = 500
 
 
 class Store:
@@ -14,6 +18,28 @@ class Store:
         self._tables: dict[str, list[dict[str, Any]]] = {
             name: [dict(row) for row in rows] for name, rows in SEED_ROWS.items()
         }
+        # 同一条记录的「读-改-写」必须串行，否则并发保存会互相覆盖
+        self._lock = threading.RLock()
+        # 保存请求的幂等台账：request_id -> 已完成的处理结果，重试时直接回放
+        self._idempotency: dict[str, Any] = {}
+        self._idempotency_order: list[str] = []
+
+    @property
+    def lock(self) -> threading.RLock:
+        return self._lock
+
+    def idempotency_get(self, key: str) -> Any | None:
+        with self._lock:
+            return self._idempotency.get(key)
+
+    def idempotency_put(self, key: str, outcome: Any) -> None:
+        with self._lock:
+            if key not in self._idempotency:
+                self._idempotency_order.append(key)
+            self._idempotency[key] = outcome
+            while len(self._idempotency_order) > IDEMPOTENCY_LIMIT:
+                oldest = self._idempotency_order.pop(0)
+                self._idempotency.pop(oldest, None)
 
     def module_names(self) -> list[str]:
         return sorted(self._tables)
