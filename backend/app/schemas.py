@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from typing import Any, Generic, TypeVar
 
-from pydantic import BaseModel, Field
+from pydantic import AliasChoices, BaseModel, Field
 
 T = TypeVar("T")
 
@@ -19,6 +19,7 @@ class ActionResult(BaseModel):
     ok: bool
     message: str
     entry: dict[str, Any] | None = None
+    code: str | None = None
 
 
 class EntryPayload(BaseModel):
@@ -26,6 +27,15 @@ class EntryPayload(BaseModel):
 
     values: dict[str, Any] = Field(default_factory=dict)
     remark: str | None = None
+    expected_version: int | None = Field(
+        default=None,
+        validation_alias=AliasChoices("expected_version", "expectedVersion", "version"),
+    )
+    request_id: str | None = Field(
+        default=None,
+        validation_alias=AliasChoices("request_id", "requestId"),
+    )
+    action: str | None = None
 
 
 

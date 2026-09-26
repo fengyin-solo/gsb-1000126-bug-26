@@ -9,6 +9,7 @@ const Reagent = () => import('@/views/reagent/index.vue')
 const Result = () => import('@/views/result/index.vue')
 const Report = () => import('@/views/report/index.vue')
 const Qc = () => import('@/views/qc/index.vue')
+const QcDetail = () => import('@/views/qc/detail.vue')
 const Deviation = () => import('@/views/deviation/index.vue')
 const SampleStorage = () => import('@/views/sample_storage/index.vue')
 const Contract = () => import('@/views/contract/index.vue')
@@ -32,6 +33,7 @@ const router = createRouter({
     { path: '/result', name: 'result', component: Result },
     { path: '/report', name: 'report', component: Report },
     { path: '/qc', name: 'qc', component: Qc },
+    { path: '/qc/:id(\\d+)', name: 'qc-detail', component: QcDetail },
     { path: '/deviation', name: 'deviation', component: Deviation },
     { path: '/sample_storage', name: 'sample_storage', component: SampleStorage },
     { path: '/contract', name: 'contract', component: Contract },
